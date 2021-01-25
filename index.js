@@ -26,19 +26,28 @@ const typeDefs = gql`
 
   type Query {
     movies: [Movie]
+    movie(id: ID): Movie
   }
 `;
 
 const movies = [
   {
+    id: "321",
     title: "5 Deadly Venoms",
     releaseDate: "10-10-1983",
     rating: 5,
   },
   {
+    id: "456",
     title: "36 Chambers",
     releaseDate: "8-20-1983",
     rating: 5,
+    actor: [
+      {
+        id: "123",
+        name: "Bruce Lee",
+      },
+    ],
   },
 ];
 
@@ -47,11 +56,21 @@ const resolvers = {
     movies: () => {
       return movies;
     },
+    movie: (obj, { id }, context, info) => {
+      const foundMovie = movies.find((movie) => {
+        return movie.id === id;
+      });
+      return foundMovie;
+    },
   },
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
 
-server.listen().then(({ url }) => {
-  console.log(`Server started at ${url}`);
-});
+server
+  .listen({
+    port: process.env.PORT || 4000,
+  })
+  .then(({ url }) => {
+    console.log(`Server started at ${url}`);
+  });
