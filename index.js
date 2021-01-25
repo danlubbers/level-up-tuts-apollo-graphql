@@ -65,7 +65,12 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: true, // fixes GET query missing
+  playground: true, // fixes GET query missing
+});
 
 server
   .listen({
