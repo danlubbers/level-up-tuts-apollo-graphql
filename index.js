@@ -1,6 +1,10 @@
 const { ApolloServer, gql } = require("apollo-server");
+const { GraphQLScalarType } = require("graphql");
+const { Kind } = require("graphql/language");
 
 const typeDefs = gql`
+  scalar Date
+
   enum Status {
     WATCHED
     INTERESTED
@@ -16,7 +20,7 @@ const typeDefs = gql`
   type Movie {
     id: ID!
     title: String!
-    releaseDate: String
+    releaseDate: Date
     rating: Int
     status: Status
     actor: [Actor] # Valid null or [] or [... some data]. Not Valid [... some data without name or id]
@@ -30,22 +34,37 @@ const typeDefs = gql`
   }
 `;
 
+const actors = [
+  {
+    id: "gordon",
+    name: "Gordon Liu",
+  },
+  {
+    id: "bruce",
+    name: "Bruce Lee",
+  },
+];
+
 const movies = [
   {
     id: "321",
     title: "5 Deadly Venoms",
-    releaseDate: "10-10-1983",
+    releaseDate: new Date("10-10-1983"),
     rating: 5,
+    actor: [
+      {
+        id: "bruce",
+      },
+    ],
   },
   {
     id: "456",
     title: "36 Chambers",
-    releaseDate: "8-20-1983",
+    releaseDate: new Date("8-20-1983"),
     rating: 5,
     actor: [
       {
-        id: "123",
-        name: "Bruce Lee",
+        id: "gordon",
       },
     ],
   },
@@ -63,6 +82,36 @@ const resolvers = {
       return foundMovie;
     },
   },
+
+  Movie: {
+    actor: (obj, arg, context) => {
+      console.log(obj);
+
+      const actorIds = obj.actor.map((actor) => actor.id);
+      const filteredActors = actors.filter((actor) => {
+        return actorIds.includes(actor.id);
+      });
+      return filteredActors;
+    },
+  },
+
+  Date: new GraphQLScalarType({
+    name: "Date",
+    description: "It's a date, deal with it!",
+    parseValue(value) {
+      // value from the client
+      return new Date(value);
+    },
+    serialize(value) {
+      // value sent to the client
+      return value.getTime();
+    },
+    parseLiteral(ast) {
+      if (ast.kind === Kind.INT) {
+        return new Date(ast.value);
+      }
+    },
+  }),
 };
 
 const server = new ApolloServer({
